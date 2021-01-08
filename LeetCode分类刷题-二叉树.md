@@ -1,4 +1,4 @@
-# LeetCode 二叉树（二叉树的层序遍历未看）
+# LeetCode 二叉树(你真的会翻转二叉树么)
 
 ## 144. 二叉树的前序遍历
 
@@ -178,6 +178,336 @@ class Solution {
     }
 }
 ```
+
+
+
+## 102. 二叉树的层序遍历
+
+> 题目：给定一棵二叉树，返回其按层序遍历得到的节点值(即逐层地，从左到右访问所有节点)
+>
+> 将每一层封装为一个 List<Integer>
+
+- 注意：返回结果要按层包装为List<Integer>；
+
+### 思路一：myself
+
+- 在整个循环体中，当前层的Node出队，下一层的非空节点入队，统计下一层的数量；
+- 统计层的变量 layerList 放在循环体中；
+
+```java
+class Solution {
+
+    public List<List<Integer>> levelOrder(TreeNode root) {
+        if(root == null){
+            return new ArrayList<>();
+        }
+        List<List<Integer>> res = new ArrayList<>();         // 封装最终的返回结果      
+        Deque<TreeNode> queue = new LinkedList<>();
+        int layerNum = 1;                                    // 统计每层的节点个数
+        queue.add(root);
+        while (!queue.isEmpty()) {
+            int tempNextLayerNum = 0;                         // 统计下一层的节点个数
+            List<Integer> layerList = new ArrayList<>();      // 封装每层的节点值，layerList要放在循环内部，不然返回结果中的值会被每次更新的替换，比如第一次是 [1,2]，第二次是[3,4]，那么最后res中的结果就是{[3,4],[3,4]};
+            // 将该层的节点出队                        
+            while (layerNum > 0) {
+                TreeNode node = queue.remove();
+                // 下一层节点入队
+                if(node.left != null){
+                    queue.add(node.left);
+                    tempNextLayerNum ++;
+                }
+                if(node.right != null){
+                    queue.add(node.right);
+                    tempNextLayerNum ++;
+                }
+                layerList.add(node.val);
+                layerNum --;                
+                if(layerNum == 0){
+                    res.add(layerList);
+                }
+            }
+            layerNum = tempNextLayerNum;
+        }
+        return res;
+    }
+
+}
+```
+
+### 思路二：LeetCode
+
+- 阅读代码之后，发现LeetCode中的思路与自己的思路大致相同，维护一个每层中TreeNode的数量，将每层的节点入队并在出队的时候将下一层的节点入队；
+- 但有一说一，人家的代码写的比我的好，相当于是在自己的思路上的一个优化吧
+
+```java
+class Solution {
+    public List<List<Integer>> levelOrder(TreeNode root) {
+        List<List<Integer>> res = new ArrayList<List<Integer>>();
+        if (root == null) {
+            return res;
+        }
+        Deque<TreeNode> queue = new LinkedList<>();
+        queue.add(root);
+        while (!queue.isEmpty()) {
+            List<Integer> list = new ArrayList<>();		   // 保存每一层节点的值，list要在循环内部
+            int layerNum = queue.size();			       // 上一层的node出队后，下一层的节点数量就是queue.size();
+            for (int i = 1; i <= layerNum; i ++) {		   // 循环起始 i == 1,循环结束 i <= layerNum
+                TreeNode temp = queue.poll();
+                list.add(temp.val);
+                if (temp.left != null) {
+                    queue.add(temp.left);
+                }
+                if (temp.right != null) {
+                    queue.add(temp.right);
+                }
+            }
+            res.add(list);
+        }
+        return res;
+    }
+}
+```
+
+## 107. 二叉树的层序遍历 II
+
+> 题目：给定一个二叉树，返回其节点值自底向上的层序遍历。(即按从叶子节点所在层到根节点所在的层，逐层从左向右遍历)
+
+### 思路：二叉树层序遍历 + 翻转reverse
+
+```java
+class Solution {
+    // 二叉树层序遍历的基础上，将结果reverse
+    public List<List<Integer>> levelOrderBottom(TreeNode root) {
+        List<List<Integer>> res = new ArrayList<List<Integer>>();
+        if (root == null) {
+            return res;
+        }
+        Deque<TreeNode> queue = new LinkedList<>();
+        queue.add(root);
+        while (!queue.isEmpty()) {
+            List<Integer> list = new ArrayList<>();
+            int layerNum = queue.size();
+            for (int i = 1; i <= layerNum; i ++) {
+                TreeNode temp = queue.poll();
+                list.add(temp.val);
+                if (temp.left != null) {
+                    queue.add(temp.left);
+                }
+                if (temp.right != null) {
+                    queue.add(temp.right);
+                }
+            }
+            res.add(list);
+        }
+        Collections.reverse(res);
+        return res;
+    }
+}
+```
+
+
+
+## 199. 二叉树的右视图
+
+> 题目：给定一棵二叉树，想象自己站在它的右侧，按照从顶部到底部的顺序，返回从右侧能看到的节点值；
+
+### 思路一：层序遍历 + 右节点先入队
+
+- 目的是要找到每一层的最右面的节点，但不一定就是一直遍历 右节点 ---  右节点；
+- 改进层序遍历，每次子树的右节点先入队，每次队列中的元素是每一层中的节点，所以这样队列头元素就是最右面的元素；
+
+```java
+class Solution {
+    // 找到每一层最右的节点，不一定就是一直右节点 -- 右节点
+    // 改进层序遍历，每次子树的右节点先入队，拿出队列头元素即可
+    public List<Integer> rightSideView(TreeNode root) {
+        List<Integer> res = new ArrayList<>();
+        if (root == null) {
+            return res;
+        }
+        Deque<TreeNode> queue = new LinkedList<>();
+        queue.add(root);
+        while (!queue.isEmpty()) {
+            res.add(queue.peek().val);
+            int layerNum = queue.size();
+            for (int i = 1; i <= layerNum; i ++) {
+                TreeNode temp = queue.poll();	// poll() 方法出队
+                if (temp.right != null) {		// 出队节点的右节点先入队
+                    queue.add(temp.right);
+                }
+                if (temp.left != null) {
+                    queue.add(temp.left);
+                }
+            }
+        }
+        return res;
+    }
+}
+```
+
+
+
+## 637. 二叉树的层平均值
+
+> 题目：给定一个非空二叉树，返回一个由每层节点平均值组成的数组。
+
+### 思路一：层序遍历 + 求平均值
+
+- 利用层序遍历框架，求出每一层的总和和平均值，放入结果中即可；
+
+```java
+class Solution {
+    public List<Double> averageOfLevels(TreeNode root) {
+        List<Double> res = new ArrayList<>();
+        if (root == null) {
+            return res;
+        }
+        Deque<TreeNode> queue = new LinkedList<>();
+        queue.add(root);
+        while (!queue.isEmpty()) {
+            double sum = 0.0;
+            int layerNum = queue.size();
+            for (int i = 1; i <= layerNum; i ++) {
+                TreeNode temp = queue.poll();
+                sum += temp.val;
+                if (temp.left != null) {
+                    queue.add(temp.left);
+                }
+                if (temp.right != null) {
+                    queue.add(temp.right);
+                }
+            }
+            res.add(sum / layerNum);
+        }
+        return res;
+    }
+}
+```
+
+
+
+## 429. N叉树的层序遍历
+
+> 题目：给定一个N叉树，返回其节点值的层序遍历(即从左到右，逐层遍历)。树的序列化输入是用层序遍历，每组子节点都由null分割。
+
+```java
+// Definition for a Node
+class Node {
+    public int val;
+    public List<Node> children;
+    public Node () {};
+    pubblic Node (int _val) {
+        val = _val;
+    }
+    public Node (int _val, List<Node> _children) {
+        val = _val;
+        children = _children;
+    }
+}
+```
+
+### 思路一：层序遍历框架 + 存储children节点
+
+```java
+class Solution {
+    public List<List<Integer>> levelOrder(Node root) {
+        List<List<Integer>> res = new ArrayList<List<Integer>>();
+        if (root == null) {
+            return res;
+        }
+        Deque<Node> queue = new LinkedList<>();
+        queue.add(root);
+        while (!queue.isEmpty()) {
+            List<Integer> list = new ArrayList<>();     // 存储每层的节点值
+            int layerNum = queue.size();                // 存储每层的节点个数
+            for (int i = 1; i <= layerNum; i ++) {
+                Node temp = queue.poll();
+                list.add(temp.val);
+                for (Node node: temp.children) {
+                    queue.add(node);
+                }
+            }
+            res.add(list);
+        }
+        return res;
+    }
+}
+```
+
+
+
+## 226.  翻转二叉树
+
+> 题目：翻转一棵二叉树。
+
+**解题思路：交换节点的左右子节点**
+
+### 思路一：层序遍历框架 + 翻转节点的左右子节点
+
+- 基础框架仍然为**层序遍历框架**；
+
+- 在遍历每一层节点的时候，交换出队节点的左右子节点；
+- 注意点：交换左右子节点的时候，若有空节点仍然需要执行交换操作；但左右子节点入队的时候，空节点不需要入队；
+
+```java
+class Solution {
+    public TreeNode invertTree(TreeNode root) {
+        if (root == null) {
+            return null;
+        }
+        Deque<TreeNode> queue = new LinkedList<>();
+        queue.add(root);
+        while (!queue.isEmpty()) {
+            int layerNum = queue.size();
+            for (int i = 1; i <= layerNum; i ++) {
+                TreeNode temp = queue.poll();
+                Swap(temp);  // 出队节点，交换左右节点。每一层解决交换节点的左右子节点，若有一个节点为空，仍然需要交换左右节点，但入队时空节点不需要入队；
+                if (temp.left != null) {                                 // 左右子节点入队，若为空则不需要入队操作
+                    queue.add(temp.left);
+                }
+                if (temp.right != null) {
+                    queue.add(temp.right);
+                }
+            }
+        }
+        return root;
+    }
+
+    public void Swap (TreeNode node) {
+        TreeNode node1 = node.left;
+        TreeNode node2 = node.right;
+        node.left = node2;
+        node.right = node1;
+    }
+
+}
+```
+
+### 思路二：LeetCode(牛X) 递归实现
+
+- 又到了有一说一的时候了，有一说一，人家这代码是真滴简单啊
+- 直接用递归。。。，我咋就不会递归呢。。。
+
+```java
+class Solution {
+    public TreeNode invertTree(TreeNode root) {
+        if (root == null) {
+            return null;
+        }
+        TreeNode node1 = invertTree(root.left);
+        TreeNode node2 = invertTree(root.right);
+        root.left = node2;
+        root.right = node1;
+        return root;
+    }
+}
+```
+
+
+
+
+
+
 
 
 
