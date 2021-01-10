@@ -1,4 +1,10 @@
-# LeetCode 二叉树(你真的会翻转二叉树么)
+# LeetCode 二叉树(二叉树：我对称么未看)
+
+## 递归三部曲
+
+- 确定递归函数的参数和返回值
+- 确定终止条件
+- 确定单层递归的逻辑
 
 ## 144. 二叉树的前序遍历
 
@@ -440,7 +446,7 @@ class Solution {
 
 > 题目：翻转一棵二叉树。
 
-**解题思路：交换节点的左右子节点**
+**解题思路：翻转二叉树其实就是把每一个节点的左右孩子交换一下。遍历过程中去翻转每一个节点的左右孩子就可以达到整体翻转的效果。这道题目可以使用前、后、层序遍历，但不可使用中序遍历。因为中序遍历过程中交换根节点的左右节点后，遍历右节点还是相当于遍历未交换根节点左右节点前的左节点，最终的效果就是原二叉树的左节点的左右孩子交换了两遍，右节点没有交换左右孩子。**
 
 ### 思路一：层序遍历框架 + 翻转节点的左右子节点
 
@@ -483,7 +489,7 @@ class Solution {
 }
 ```
 
-### 思路二：LeetCode(牛X) 递归实现
+### 思路二：后序遍历 + 交换左右孩子
 
 - 又到了有一说一的时候了，有一说一，人家这代码是真滴简单啊
 - 直接用递归。。。，我咋就不会递归呢。。。
@@ -503,9 +509,146 @@ class Solution {
 }
 ```
 
+### 思路三：前序遍历 + 交换左右孩子
+
+```java
+class Solution {
+    // 前序遍历 + 交换左右孩子
+    public TreeNode invertTree(TreeNode root) {
+        if (root == null) {
+            return null;
+        } 
+        // 前序遍历框架
+        Swap(root);
+        invertTree(root.left);
+        invertTree(root.right);
+        return root;
+    }
+
+    private void Swap (TreeNode node) {
+        TreeNode left = node.left;
+        TreeNode right = node.right;
+        node.left = right;
+        node.right = left;
+    }
+}
+```
+
+### 思路四：前序遍历迭代 + 交换左右孩子
+
+```java
+class Solution {
+    // 前序迭代 + 交换左右孩子
+    public TreeNode invertTree(TreeNode root) {
+        if (root == null) {
+            return null;
+        }
+        Deque<TreeNode> stack = new LinkedList<>();
+        stack.push(root);
+        // 二叉树的前序遍历迭代实现
+        while (!stack.isEmpty()) {
+            TreeNode temp = stack.pop();
+            Swap(temp);
+            if (temp.right != null) {
+                stack.push(temp.right);
+            }
+            if (temp.left != null) {
+                stack.push(temp.left);
+            }
+        }
+        return root;
+    }
+
+    private void Swap (TreeNode node) {
+        TreeNode left = node.left;
+        node.left = node.right;
+        node.right = left;
+    }
+
+}
+```
 
 
 
+## 101. 对称二叉树
+
+> 题目：给定一个二叉树，检查它是否是镜像对称的。
+
+- 仔细想想，这个题只能用**后序遍历**，因为要确定树是否是对称二叉树，要从下往上来判断(每一层都是对称的)，只有下一层是对称的上一层才有可能对称。
+- 看出使用的遍历方式，左子树左右中，右子树右左中，所以我把这个遍历顺序也称之为“后序遍历”（尽管不是严格的后序遍历）
+
+### 思路：后序遍历 + 后序遍历改进
+
+- 对于二叉树是否对称，要比较的是根节点的左子树与右子树是不是相互翻转的，理解这一点就知道了，其实要比较的是两个数，所以在递归遍历的过程中，也是要同时遍历两棵树。比较两个子树的里侧和外侧元素是否相等。
+- 本题遍历只能是后序遍历，因为要通过递归函数的返回值来判断两个子树的内侧节点和外侧节点是否相等。
+- 正是因为要遍历两棵树而且要比较内侧和外侧节点，所以准确的来说是一个数的遍历顺序是左右中，一个树的遍历顺序是左中右。
+
+![image-20210110210914601](C:\Users\Lenovo\AppData\Roaming\Typora\typora-user-images\image-20210110210914601.png)
+
+- 递归条件1：确定递归函数的参数和返回值
+
+> 要比较根节点的两个子树是否是相互翻转的，进而判断这个数是不是对称的，所以要比较的是两个树，参数就是左子树节点和右子树节点。
+
+- 递归条件2：确定终止条件
+
+>要比较两个节点数值相不相同，首先要把两个节点为空的情况弄清楚！否则后面比较数值的时候就会操作空指针了。
+>
+>节点为空的情况有：（**「注意我们比较的其实不是左孩子和右孩子，所以如下我称之为左节点右节点」**）
+>
+>左节点为空，右节点不为空，不对称，return false
+>
+>左不为空，右为空，不对称 return  false
+>
+>左右都为空，对称，返回true
+>
+>此时已经排除掉了节点为空的情况，那么剩下的就是左右节点不为空：
+>
+>左右都不为空，比较节点数值，不相同就return false
+>
+>此时左右节点不为空，且数值也不相同的情况我们也处理了。
+>
+>把以上情况都排除之后，剩下的就是 左右节点都不为空，且数值相同的情况
+
+- 递归条件3：确定单层递归的逻辑
+
+> 此时才进入单层递归的逻辑，单层递归的逻辑就是处理 右节点都不为空，且数值相同的情况。
+>
+> - 比较二叉树外侧是否对称：传入的是左节点的左孩子，右节点的右孩子。
+> - 比较内测是否对称，传入左节点的右孩子，右节点的左孩子。
+> - 如果左右都对称就返回true ，有一侧不对称就返回false 。
+
+```java
+class Solution {
+    public boolean isSymmetric(TreeNode root) {
+        if (root == null) {
+            return true;
+        }
+        boolean res = isSymmetric(root, root);
+        return res;
+    }
+
+    public boolean isSymmetric (TreeNode left, TreeNode right) {
+        // 两个节点均为空，返回true
+        if (left == null && right == null) {
+            return true;
+        }
+        // 有一个节点为空，返回false
+        if (left == null || right == null) {
+            return false;
+        }
+        // 接下来的情况就是两个节点均不为空，需要比较节点值
+        if (left.val != right.val) {
+            return false;
+        }
+        // 两个节点值相等
+        boolean outside = isSymmetric(left.left, right.right);// 左子树：左、 右子树：右
+        boolean inside = isSymmetric(left.right, right.left); // 左子树：右、 右子树：左
+        boolean isSame = outside && inside;                   // 左子树：中、 右子树：中 （逻辑处理）
+        return isSame;
+    }
+
+}
+```
 
 
 
