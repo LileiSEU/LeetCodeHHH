@@ -1,4 +1,4 @@
-# LeetCode 二叉树(二叉树：我对称么未看)
+# LeetCode 二叉树(我有多少个节点未看)
 
 ## 递归三部曲
 
@@ -576,8 +576,9 @@ class Solution {
 
 - 仔细想想，这个题只能用**后序遍历**，因为要确定树是否是对称二叉树，要从下往上来判断(每一层都是对称的)，只有下一层是对称的上一层才有可能对称。
 - 看出使用的遍历方式，左子树左右中，右子树右左中，所以我把这个遍历顺序也称之为“后序遍历”（尽管不是严格的后序遍历）
+- root 节点为空的时候返回 true；
 
-### 思路：后序遍历 + 后序遍历改进
+### 思路：后序遍历 + 后序遍历改进(递归)
 
 - 对于二叉树是否对称，要比较的是根节点的左子树与右子树是不是相互翻转的，理解这一点就知道了，其实要比较的是两个数，所以在递归遍历的过程中，也是要同时遍历两棵树。比较两个子树的里侧和外侧元素是否相等。
 - 本题遍历只能是后序遍历，因为要通过递归函数的返回值来判断两个子树的内侧节点和外侧节点是否相等。
@@ -647,6 +648,242 @@ class Solution {
         return isSame;
     }
 
+}
+```
+
+### 思路二：迭代实现
+
+```java
+class Solution {
+    // 试着使用迭代实现以下
+    public boolean isSymmetric(TreeNode root) {
+        if (root == null) {
+            return true;
+        }
+        // 使用队列
+        Deque<TreeNode> queue = new LinkedList<>();
+        queue.add(root.left);
+        queue.add(root.right);
+        while (!queue.isEmpty()) {
+            TreeNode left = queue.poll();
+            TreeNode right = queue.poll();
+            // 若两个节点均为空，则继续循环
+            if (left == null && right == null) {
+                continue;
+            }
+            // 左右节点有一个为空，或者值不相等，返回false
+            if (left == null || right == null || left.val != right.val) {
+                return false;
+            }
+            // 注意孩子节点的添加顺序
+            queue.add(left.left);
+            queue.add(right.right);
+            queue.add(left.right);
+            queue.add(right.left);
+        }
+        return true;
+    }
+
+}
+```
+
+
+
+## 104. 二叉树的最大深度
+
+> 题目：给定一个二叉树，找出其最大深度。二叉树的深度为根节点到最远叶子节点的最长路径上的节点数。
+>
+> 说明：叶子节点是指没有子节点的节点。
+
+- **树的最大深度就是树的层数**
+
+### 思路一：层序遍历(迭代)(Myself)
+
+```java
+class Solution {
+    // 层序遍历，每次每一层的节点出队
+    public int maxDepth(TreeNode root) {
+        int res = 0;//最大深度
+        if (root == null) {
+            return res;
+        }
+        Deque<TreeNode> queue = new LinkedList<>();
+        queue.add(root);
+        while (!queue.isEmpty()) {
+            int layerNum = queue.size();
+            for (int i = 1; i <= layerNum; i++) {
+                TreeNode temp = queue.poll();
+                if (temp.left != null) {
+                    queue.add(temp.left);
+                }
+                if (temp.right != null) {
+                    queue.add(temp.right);
+                }
+            }
+            res  = res + 1;
+
+        }
+        return res;
+    }
+}
+```
+
+### 思路二：后序遍历
+
+```java
+class Solution {
+    public int maxDepth(TreeNode root) {
+        if (root == null) {
+            return 0;
+        }
+        int leftDepth = maxDepth(root.left);
+        int rightDepth = maxDepth(root.right);
+        int res = 1 + Math.max(leftDepth, rightDepth);
+        return res;
+    }
+}
+```
+
+
+
+## 559. N叉树的最大深度
+
+> 题目：给定一个N叉树，找到其最大深度。最大深度是指从根节点到最远叶子节点的最长路径上的节点综述。
+>
+> N叉树输入按层序遍历序列化表示，每组子节点由空值分隔。
+
+- **注意：树的最大深度就是树的层数**
+
+### 思路一：N叉树的层序遍历
+
+```java
+class Solution {
+    // N叉树的层序遍历
+    public int maxDepth(Node root) {
+        int res = 0;
+        if (root == null) {
+            return res;
+        }
+        Deque<Node> queue = new LinkedList<>();
+        queue.add(root);
+        while (!queue.isEmpty()) {
+            int layerNum = queue.size();
+            for (int i = 1; i <= layerNum; i++) {
+                Node temp = queue.poll();
+                for (Node node: temp.children) {
+                    queue.add(node);
+                }
+            }
+            res = res + 1;
+        }
+        return res;
+    }
+}
+```
+
+### 思路二：N叉树的后序遍历
+
+```java
+class Solution {
+    public int maxDepth(Node root) {
+        int res = 0;
+        if (root == null) {
+            return res;
+        }
+        List<Integer> list = new ArrayList<>();
+        for (Node node: root.children) {
+            list.add(maxDepth(node));            
+        }
+        res = maxNum(list) + 1;
+        return res;
+    }
+
+    // 寻找ArrayList中的最大值
+    private int maxNum (List<Integer> list) {
+        if (list.size() == 0) {
+            return 0;
+        }
+        int res = list.get(0);
+        for (int i = 0; i < list.size(); i++) {
+            if (list.get(i) > res) {
+                res = list.get(i);
+            }
+        }
+        return res;
+    }
+
+}
+```
+
+
+
+## 111. 二叉树的最小深度(要找到叶子节点)
+
+> 题目：给定一个二叉树，找出其最小深度。最小深度是从根节点到最近叶子节点的最短路径上的节点数量。
+>
+> 说明：叶子节点是指没有子节点的节点。
+
+- 该题目中需要注意的问题：二叉树的最小深度需要注意节点是否是叶子节点；
+
+### 思路一：二叉树的层序遍历
+
+- 在层序遍历的基础上，要增加对二叉树节点是否是叶子节点的判断；当层序遍历到达叶子节点的时候，就可以返回最小深度值。
+
+```java
+class Solution {
+    // 层序遍历
+    public int minDepth(TreeNode root) {
+        int res = 0;
+        if (root == null) {
+            return res;
+        }
+        Deque<TreeNode> queue = new LinkedList<>();
+        queue.add(root);
+        while (!queue.isEmpty()) {
+            res = res + 1;
+            int layerNum = queue.size();
+            for (int i = 1; i <= layerNum; i++) {
+                TreeNode temp = queue.poll();
+                // 判断叶子节点
+                if (temp.left == null && temp.right == null) {
+                    return res;
+                }
+                if (temp.left != null) {
+                    queue.add(temp.left);
+                }
+                if (temp.right != null) {
+                    queue.add(temp.right);
+                }
+            }
+        }
+        return res;
+    }
+}
+```
+
+### 思路二：后序遍历(递归代码改进)
+
+- 处理单层逻辑的时候，分情况讨论：该节点只有左孩子节点、该节点值只有右孩子节点、该节点有左右孩子节点
+
+```java
+class Solution {
+    public int minDepth(TreeNode root) {
+        if (root == null) {
+            return 0;
+        }
+        int leftDepth = minDepth(root.left);
+        int rightDepth = minDepth(root.right);
+        // 若该节点只有左孩子节点,保证最后返回的节点深度是左孩子深度即可
+        if (root.left != null && root.right == null) {
+            rightDepth = leftDepth + 1;
+        }
+        // 若该节点只有右孩子节点,保证最后返回的节点深度是右孩子深度即可
+        if (root.right != null && root.left == null) {
+            leftDepth = rightDepth + 1;
+        }
+        int res = Math.min(leftDepth, rightDepth) + 1;
+        return res;
+    }
 }
 ```
 
