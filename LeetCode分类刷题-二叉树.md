@@ -187,6 +187,134 @@ class Solution {
 
 
 
+## Morris Traversal 方法遍历二叉树(非递归，不用栈，O(1)空间)
+
+```shell
+# 参考链接：https://www.cnblogs.com/AnnieKim/archive/2013/06/15/MorrisTraversal.html
+```
+
+- 实现二叉树的前中后序遍历，有两个要求：
+  - O(1) 空间复杂度，即只能使用常数空间；
+  - 二叉树的形状不能被破坏(中间过程允许改变其形状)
+
+- 要使用O(1) 空间进行遍历，最大的难点在于，遍历到子节点的时候怎样重新返回到父节点(假设节点中没有指向父节点的指针)，由于不能用栈作为辅助空间，为了解决这个问题，Morris方法用到了**线索二叉树(Threaded Binary Tree)**的概念；
+- 线索二叉树：对于n个结点的二叉树，在二叉链存储结构中有n+1个空链域，利用这些空链域存放在某种遍历次序下该结点的前驱结点和后继结点的指针，这些指针称为线索，加上线索的二叉树称为线索二叉树。
+- 在Morris方法中不需要为每个节点额外分配指针指向其前驱(predecessor)和后继节点(successor)，只需要利用叶子节点中的左右空指针指向某种遍历下的前驱或后继节点就可以了；
+
+```java
+//  二叉树结点
+class TreeNode {
+    int val;
+    TreeNode left;
+    TreeNode right;
+    TreeNode(int val) {
+        this.val = val;
+        left = null;
+        right = null;
+    }
+}
+```
+
+
+
+### 应用1：中序遍历
+
+- 利用右子树，可以将整个二叉树都划分为右子树，每个节点都过两遍，此时可以知道所有的节点总共遍历两次，所以总的时间复杂度为O(N)
+- Morris遍历本质：对于递归版本的二叉树，来到一个节点会遍历左子树和右子树，遍历完左子树之后会重新回到当前节点，遍历完右子树之后，同样需要返回当前节点，所以总共遍历了当前节点三次。Morris遍历中，如果这个数树有左子树，则遍历这个节点两次，否则遍历这个节点一次。Morris是利用左子节点的最右孩子来判断是第一次来到这个节点还是第二次来到这个节点。**一个节点在第一次来到这个节点其实就是前序遍历。**
+
+```shell
+# 步骤：
+	1. 若当前节点的左孩子为空，则输出当前节点并将其右孩子作为当前节点；
+	2. 如果当前节点的左孩子不为空，在当前节点的左子树中找到当前节点在中序遍历下的前驱节点。
+	  a) 如果前驱节点的右孩子为空，将它的右孩子设置为当前节点。当前节点更新为当前节点的左孩子。
+   	  b) 如果前驱节点的右孩子为当前节点，将它的右孩子重新设为空（恢复树的形状）。输出当前节点。当前节点更新为当前节点的右孩子。
+	3. 重复以上1、2直到当前节点为空。
+```
+
+```java
+class Solution {
+    // 利用线索二叉树，空间复杂度O(1)
+    public List<Integer> inorderTraversal(TreeNode root) {
+        List<Integer> res = new ArrayList<>();
+        if (root == null) {
+            return res;
+        }
+        TreeNode cur = root;
+        while (cur != null) {
+            if (cur.left == null) {
+                // 左节点为空，跳到右节点
+                res.add(cur.val);
+                cur = cur.right;
+            } else {
+                TreeNode pre = cur.left;
+                // 找到cur节点中序遍历的前驱结点：左子树的最右节点
+                while (pre.right != null && pre.right != cur) {
+                    pre = pre.right;
+                }
+                // 第一次到达，构造线索树，设置线索，右节点为当前节点；
+                if (pre.right == null) {
+                    pre.right = cur;
+                    cur = cur.left;
+                } else {
+                // pre.right == cur 的情况：
+                // 第二次到达，需要回溯，说明cur节点的左子树已经遍历完毕
+                // 意味着前驱节点的右节点已被设置，该次遍历为回溯；左边已经搞定，接下来处理右边
+                    pre.right = null;
+                    res.add(cur.val);
+                    cur = cur.right;
+                }
+            }
+        }
+        return res;
+    }
+}
+```
+
+
+
+### 应用2：前序遍历
+
+- 前序遍历在中序遍历的基础上，构造线索树即第一次到达叶子节点的左右节点的时候就将cur节点值加入到结果集中；
+
+```java
+class Solution {
+    // 构造线索树实现前序遍历的非递归写法
+    public List<Integer> preorderTraversal(TreeNode root) {
+        List<Integer> res = new ArrayList<>();
+        if (root == null) {
+            return res;
+        }
+        TreeNode cur = root;
+        while (cur != null) {
+            if (cur.left == null) {
+                res.add(cur.val);
+                cur = cur.right;
+            } else {
+                TreeNode pre = cur.left;
+                while (pre.right != null && pre.right != cur) {
+                    pre = pre.right;
+                }
+                if (pre.right == null) {
+                    // 构建线索树
+                    res.add(cur.val);
+                    pre.right = cur;
+                    cur = cur.left;
+                } else {    // pre.right == cur 的情况
+                    pre.right = null;
+                    cur = cur.right;
+                }
+            }
+
+        }
+        return res;
+    }
+}
+```
+
+
+
+
+
 ## 102. 二叉树的层序遍历
 
 > 题目：给定一棵二叉树，返回其按层序遍历得到的节点值(即逐层地，从左到右访问所有节点)
